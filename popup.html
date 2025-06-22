@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body {
+      width: 350px;
+      padding: 15px;
+      font-family: Arial, sans-serif;
+      font-size: 14px;
+    }
+    .setting-group {
+      margin-bottom: 15px;
+    }
+    label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: bold;
+    }
+    input, select {
+      width: 100%;
+      padding: 5px;
+      border: 1px solid #ccc;
+      border-radius: 3px;
+      box-sizing: border-box;
+    }
+    .checkbox-group {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+    .checkbox-group input[type="checkbox"] {
+      width: auto;
+      margin-right: 8px;
+    }
+    .time-input-group {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+    }
+    .time-input-group input {
+      flex: 1;
+    }
+    .time-input-group select {
+      flex: 1;
+    }
+    .tab-list {
+      max-height: 200px;
+      overflow-y: auto;
+      border: 1px solid #ccc;
+      border-radius: 3px;
+      padding: 5px;
+      margin-top: 5px;
+    }
+    .tab-item {
+      padding: 5px;
+      border-bottom: 1px solid #eee;
+      font-size: 12px;
+    }
+    .tab-item:last-child {
+      border-bottom: none;
+    }
+    .tab-inactive {
+      color: #ff6b6b;
+    }
+    .save-button {
+      background-color: #4CAF50;
+      color: white;
+      padding: 8px 16px;
+      border: none;
+      border-radius: 3px;
+      cursor: pointer;
+      width: 100%;
+      margin-top: 10px;
+    }
+    .save-button:hover {
+      background-color: #45a049;
+    }
+    .status {
+      margin-top: 10px;
+      padding: 5px;
+      border-radius: 3px;
+      text-align: center;
+      font-size: 12px;
+    }
+    .status.success {
+      background-color: #d4edda;
+      color: #155724;
+    }
+    .status.error {
+      background-color: #f8d7da;
+      color: #721c24;
+    }
+    .save-button:disabled {
+      background-color: #cccccc;
+      cursor: not-allowed;
+    }
+  </style>
+</head>
+<body>
+  <h2>Auto Close Tabs</h2>
+  
+  <div class="setting-group">
+    <div class="checkbox-group">
+      <input type="checkbox" id="enableAutoClose">
+      <label for="enableAutoClose">Enable automatic tab closing</label>
+    </div>
+  </div>
+
+  <div class="setting-group">
+    <label>Close tabs after:</label>
+    <div class="time-input-group">
+      <input type="number" id="timeoutValue" min="1" max="720" value="24">
+      <select id="timeoutUnit">
+        <option value="minutes">Minutes</option>
+        <option value="hours">Hours</option>
+        <option value="days">Days</option>
+      </select>
+    </div>
+  </div>
+
+  <div class="setting-group">
+    <label for="whitelist">Whitelist (one URL pattern per line):</label>
+    <textarea id="whitelist" rows="3" placeholder="gmail.com&#10;*.google.com&#10;localhost"></textarea>
+  </div>
+
+  <button class="save-button" id="saveButton">Save Settings</button>
+  
+  <div id="status" class="status" style="display: none;"></div>
+
+  <div class="setting-group">
+    <label>Current Tabs:</label>
+    <div id="tabList" class="tab-list"></div>
+  </div>
+
+  <script src="popup.js"></script>
+</body>
+</html>
