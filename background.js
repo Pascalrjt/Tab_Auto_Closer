@@ -1,3 +1,5 @@
+console.log('Background script loading...');
+
 let tabActivity = {};
 let settings = {
   timeoutHours: 24,
@@ -6,10 +8,16 @@ let settings = {
   whitelist: []
 };
 
-browser.storage.local.get(['settings']).then((result) => {
+// Use chrome API for better compatibility
+const browserAPI = (typeof browser !== 'undefined') ? browser : chrome;
+
+browserAPI.storage.local.get(['settings']).then((result) => {
+  console.log('Settings loaded:', result);
   if (result.settings) {
     settings = { ...settings, ...result.settings };
   }
+}).catch(error => {
+  console.error('Failed to load settings:', error);
 });
 
 function getTimeoutInMilliseconds() {
@@ -50,14 +58,21 @@ function checkAndCloseInactiveTabs() {
   const timeoutMs = getTimeoutInMilliseconds();
   const now = Date.now();
 
+  console.log(`Checking tabs - timeout: ${timeoutMs}ms (${timeoutMs/1000/60} minutes)`);
+
   browser.tabs.query({}).then((tabs) => {
     tabs.forEach((tab) => {
       if (tab.pinned || isTabWhitelisted(tab.url)) return;
 
-      const lastActivity = tabActivity[tab.id] || tab.lastAccessed || now;
+      const lastActivity = tabActivity[tab.id] || tab.lastAccessed;
+      if (!lastActivity) return; // Skip if no activity data
+
       const inactiveTime = now - lastActivity;
+      
+      console.log(`Tab "${tab.title}": inactive for ${inactiveTime}ms (${Math.floor(inactiveTime/1000/60)} minutes)`);
 
       if (inactiveTime > timeoutMs) {
+        console.log(`Closing tab: ${tab.title}`);
         browser.tabs.remove(tab.id).catch(() => {});
         delete tabActivity[tab.id];
       }
@@ -118,9 +133,12 @@ browser.runtime.onMessage.addListener((request, sender, sendResponse) => {
       }
       
       settings = { ...settings, ...request.settings };
+      console.log('Settings updated:', settings);
       browser.storage.local.set({ settings }).then(() => {
+        console.log('Settings saved to storage successfully');
         sendResponse({ success: true });
       }).catch((error) => {
+        console.error('Failed to save settings to storage:', error);
         sendResponse({ success: false, error: `Storage error: ${error.message}` });
       });
       return true;
@@ -133,7 +151,7 @@ browser.runtime.onMessage.addListener((request, sender, sendResponse) => {
         id: tab.id,
         title: tab.title,
         url: tab.url,
-        lastActivity: tabActivity[tab.id] || tab.lastAccessed || Date.now(),
+        lastActivity: tabActivity[tab.id] || tab.lastAccessed,
         pinned: tab.pinned
       }));
       sendResponse({ tabs: tabsWithActivity });
