@@ -69,21 +69,13 @@ browser.tabs.onActivated.addListener((activeInfo) => {
   updateTabActivity(activeInfo.tabId);
 });
 
-browser.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
-  if (changeInfo.status === 'complete') {
-    updateTabActivity(tabId);
-  }
-});
+// Remove this listener - tab updates don't indicate user activity
 
 browser.tabs.onRemoved.addListener((tabId) => {
   delete tabActivity[tabId];
 });
 
-browser.webNavigation.onCompleted.addListener((details) => {
-  if (details.frameId === 0) {
-    updateTabActivity(details.tabId);
-  }
-});
+// Remove this listener - navigation completion doesn't indicate user activity
 
 browser.alarms.create('checkInactiveTabs', { 
   delayInMinutes: 5,
@@ -150,10 +142,12 @@ browser.runtime.onMessage.addListener((request, sender, sendResponse) => {
   }
 });
 
+// Initialize existing tabs with their browser lastAccessed time or a past timestamp
 browser.tabs.query({}).then((tabs) => {
   tabs.forEach((tab) => {
     if (!tabActivity[tab.id]) {
-      updateTabActivity(tab.id);
+      // Use browser's lastAccessed if available, otherwise set to 1 hour ago
+      tabActivity[tab.id] = tab.lastAccessed || (Date.now() - (1000 * 60 * 60));
     }
   });
 });
