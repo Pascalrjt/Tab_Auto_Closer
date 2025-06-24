@@ -60,22 +60,31 @@ function checkAndCloseInactiveTabs() {
 
   console.log(`Checking tabs - timeout: ${timeoutMs}ms (${timeoutMs/1000/60} minutes)`);
 
-  browser.tabs.query({}).then((tabs) => {
-    tabs.forEach((tab) => {
-      if (tab.pinned || isTabWhitelisted(tab.url)) return;
+  // Get currently active tab first
+  browser.tabs.query({active: true, currentWindow: true}).then((activeTabs) => {
+    const activeTabId = activeTabs[0]?.id;
+    
+    browser.tabs.query({}).then((tabs) => {
+      tabs.forEach((tab) => {
+        if (tab.id === activeTabId) {
+          console.log(`Skipping active tab: ${tab.title}`);
+          return; // Never close the currently active tab
+        }
+        if (tab.pinned || isTabWhitelisted(tab.url)) return;
 
-      const lastActivity = tabActivity[tab.id] || tab.lastAccessed;
-      if (!lastActivity) return; // Skip if no activity data
+        const lastActivity = tabActivity[tab.id] || tab.lastAccessed;
+        if (!lastActivity) return; // Skip if no activity data
 
-      const inactiveTime = now - lastActivity;
-      
-      console.log(`Tab "${tab.title}": inactive for ${inactiveTime}ms (${Math.floor(inactiveTime/1000/60)} minutes)`);
+        const inactiveTime = now - lastActivity;
+        
+        console.log(`Tab "${tab.title}": inactive for ${inactiveTime}ms (${Math.floor(inactiveTime/1000/60)} minutes)`);
 
-      if (inactiveTime > timeoutMs) {
-        console.log(`Closing tab: ${tab.title}`);
-        browser.tabs.remove(tab.id).catch(() => {});
-        delete tabActivity[tab.id];
-      }
+        if (inactiveTime > timeoutMs) {
+          console.log(`Closing tab: ${tab.title}`);
+          browser.tabs.remove(tab.id).catch(() => {});
+          delete tabActivity[tab.id];
+        }
+      });
     });
   });
 }
